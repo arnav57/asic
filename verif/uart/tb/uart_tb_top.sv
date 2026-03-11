@@ -10,10 +10,6 @@ module uart_tb_top;
     // [TODO 2: Declare your physical clock and active-low reset variables here]
     reg rstn, clk;    
 
-    // [TODO 3: Write an initial block to toggle the clock at 50MHz. 
-    // Hint: A 50MHz clock has a 20ns period.]
-    localparam CYCLES_PER_BIT = 20;
-
     initial begin
         clk  = 1;
         forever #10 clk = ~clk;
@@ -32,7 +28,7 @@ module uart_tb_top;
 
     // [TODO 5: Instantiate your physical 'uart_interface' here. 
     // What arguments does it need?]
-    uart_if u_uart_if (
+    uart_rx_interface u_uart_rx_if (
         .clk(clk),
         .rstn(rstn)
     );
@@ -45,11 +41,11 @@ module uart_tb_top;
     wire rx_data_valid_o;
 
     uart_rx dut (
-        .rx_clk_i       (u_uart_if.clk            ),
-        .rstn_rx_clk_i  (u_uart_if.rstn           ),
-        .rx_data_i      (u_uart_if.rx_data_i      ),
-        .rx_data_o      (u_uart_if.rx_data_o      ),
-        .rx_data_valid_o(u_uart_if.rx_data_valid_o)
+        .rx_clk_i       (u_uart_rx_if.clk            ),
+        .rstn_rx_clk_i  (u_uart_rx_if.rstn           ),
+        .rx_data_i      (u_uart_rx_if.rx_data_i      ),
+        .rx_data_o      (u_uart_rx_if.rx_data_o      ),
+        .rx_data_valid_o(u_uart_rx_if.rx_data_valid_o)
     );
 
     
@@ -59,7 +55,7 @@ module uart_tb_top;
         // instance into the UVM world so your Driver and Monitor can find it.]
 
         // uvm_config_db#( TYPE )::set( context, "instance_path", "string_name", value );
-        uvm_config_db#(virtual uart_if)::set(null, "*", "vif", u_uart_if);
+        uvm_config_db#(virtual uart_rx_interface)::set(null, "*", "vif", u_uart_rx_if);
         
         // [TODO 8: Tell UVM to start the simulation and run your specific test class.]
         run_test("uart_base_test");

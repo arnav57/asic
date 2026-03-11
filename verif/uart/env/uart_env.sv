@@ -3,7 +3,7 @@ class uart_env extends uvm_env;
     `uvm_component_utils(uart_env)
 
     // 1. Declare the components that live on this "motherboard"
-    uart_agent rx_agent;
+    uart_rx_agent rx_agent;
     
     // (Later, you'd add: uart_agent tx_agent;)
     // (Later, you'd add: uart_scoreboard scoreboard;)
@@ -18,7 +18,7 @@ class uart_env extends uvm_env;
         super.build_phase(phase);
         
         // Create the RX Agent
-        rx_agent = uart_agent::type_id::create("rx_agent", this);
+        rx_agent = uart_rx_agent::type_id::create("rx_agent", this);
         
         // By default, UVM components are ACTIVE unless we say otherwise.
         // We want our RX agent to drive pins, so we leave it active!

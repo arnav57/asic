@@ -20,7 +20,7 @@ class uart_base_test extends uvm_test;
 
     // 3. Run Phase: Where the magic happens
     virtual task run_phase(uvm_phase phase);
-        uart_sequence seq;
+        uart_rx_sequence seq;
         
         // A. Raise Objection: "Hey simulator, don't stop! I have a test to run!"
         phase.raise_objection(this);
@@ -28,7 +28,7 @@ class uart_base_test extends uvm_test;
         `uvm_info("TEST", "Starting UART Base Test...", UVM_LOW)
 
         // B. Create the sequence
-        seq = uart_sequence::type_id::create("seq");
+        seq = uart_rx_sequence::type_id::create("seq");
 
         // C. Start the sequence ON the RX Agent's sequencer
         // Notice how we navigate down the hierarchy: env -> rx_agent -> sqr

@@ -1,14 +1,14 @@
-class uart_agent extends uvm_agent;
+class uart_rx_agent extends uvm_agent;
     // Register with UVM
-    `uvm_component_utils(uart_agent)
+    `uvm_component_utils(uart_rx_agent)
 
     // 1. Declare the components that live inside this Agent
     uvm_sequencer #(uart_transaction) sqr; // Notice we use the built-in UVM sequencer!
-    uart_driver                       drv;
-    uart_monitor                      mon;
+    uart_rx_driver                    drv;
+    uart_rx_monitor                   mon;
 
     // Standard constructor
-    function new(string name = "uart_agent", uvm_component parent = null);
+    function new(string name = "uart_rx_agent", uvm_component parent = null);
         super.new(name, parent);
     endfunction
 
@@ -17,12 +17,12 @@ class uart_agent extends uvm_agent;
         super.build_phase(phase);
         
         // ALWAYS build the monitor. Even if we aren't transmitting, we want to listen.
-        mon = uart_monitor::type_id::create("mon", this);
+        mon = uart_rx_monitor::type_id::create("mon", this);
         
         // ONLY build the Driver and Sequencer if this Agent is configured to be ACTIVE
         if (get_is_active() == UVM_ACTIVE) begin
             sqr = uvm_sequencer#(uart_transaction)::type_id::create("sqr", this);
-            drv = uart_driver::type_id::create("drv", this);
+            drv = uart_rx_driver::type_id::create("drv", this);
         end
     endfunction
 

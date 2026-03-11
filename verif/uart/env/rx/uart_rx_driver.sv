@@ -1,21 +1,21 @@
-class uart_driver extends uvm_driver #(uart_transaction);
+class uart_rx_driver extends uvm_driver #(uart_transaction);
     // Register the class with UVM
-    `uvm_component_utils(uart_driver)
+    `uvm_component_utils(uart_rx_driver)
 
     // 1. The "pointer" to our physical cable
-    virtual uart_if vif;
+    virtual uart_rx_interface vif;
 
     // We use the exact same math you used in your RTL!
     localparam CYCLES_PER_BIT = 50_000_000 / 115_200;
 
     // Standard constructor
-    function new(string name = "uart_driver", uvm_component parent = null);
+    function new(string name = "uart_rx_driver", uvm_component parent = null);
         super.new(name, parent);
     endfunction
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        if(!uvm_config_db#(virtual uart_if)::get(this, "", "vif", vif)) begin
+        if(!uvm_config_db#(virtual uart_rx_interface)::get(this, "", "vif", vif)) begin
             `uvm_fatal("NODRVVIF", "Virtual interface not found for driver!")
         end
     endfunction

@@ -1,15 +1,15 @@
-class uart_monitor extends uvm_monitor;
+class uart_rx_monitor extends uvm_monitor;
     // Register the class with UVM
-    `uvm_component_utils(uart_monitor)
+    `uvm_component_utils(uart_rx_monitor)
 
     // 1. The "pointer" to our physical cable
-    virtual uart_if vif;
+    virtual uart_rx_interface vif;
 
     // 2. The Megaphone: This is how the monitor broadcasts the data it sees
     uvm_analysis_port #(uart_transaction) ap;
 
     // Standard constructor
-    function new(string name = "uart_monitor", uvm_component parent = null);
+    function new(string name = "uart_rx_monitor", uvm_component parent = null);
         super.new(name, parent);
     endfunction
 
@@ -17,7 +17,7 @@ class uart_monitor extends uvm_monitor;
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         ap = new("ap", this);
-        if(!uvm_config_db#(virtual uart_if)::get(this, "", "vif", vif)) begin
+        if(!uvm_config_db#(virtual uart_rx_interface)::get(this, "", "vif", vif)) begin
             `uvm_fatal("NOVIF", "Virtual interface not found for monitor!")
         end
     endfunction
@@ -33,7 +33,7 @@ class uart_monitor extends uvm_monitor;
         // This prevents the 'Time 0' crash
         wait(vif.rstn === 1'b1);
         
-        `uvm_info("MONITOR", "Reset released, monitor starting...", UVM_LOW)
+        `uvm_info("UART-RX-MONITOR", "Reset released, monitor starting...", UVM_LOW)
 
         forever begin
             @(posedge vif.clk);
@@ -44,7 +44,7 @@ class uart_monitor extends uvm_monitor;
                 tr.data = vif.rx_data_o;
                 
                 ap.write(tr);
-                `uvm_info("MONITOR", $sformatf("Saw RTL output byte: 8'h%0h", tr.data), UVM_LOW)
+                `uvm_info("UART-RX-MONITOR", $sformatf("Saw RTL output byte: 8'h%0h", tr.data), UVM_LOW)
             end
         end
     endtask

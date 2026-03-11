@@ -3,9 +3,14 @@ use strict;
 use warnings;
 use File::Basename;
 use Cwd 'abs_path';
+use Getopt::Long;
 
 use lib dirname(abs_path($0)) . "/../lib";
-use ProjectConfig qw(get_project_env create_sim_dir);
+use ProjectConfig qw(get_project_env create_sim_dir open_wave_after);
+
+
+my $open_wave = 0;
+GetOptions("wave" => \$open_wave);
 
 # --- 1. SETUP ---
 get_project_env();
@@ -18,6 +23,7 @@ run_std_compile();
 run_uart_compile($work_path);
 run_optimization($work_path);
 run_simulation($sim_dir);
+open_wave_after($sim_dir) if $open_wave;
 
 print "\n>>> ALL STAGES COMPLETE <<<\n";
 
@@ -39,7 +45,8 @@ sub run_uart_compile {
     my $vlog_cmd = "vlog -work $work -sv -mfcu -L uvm " .
                    "+incdir+$ENV{UART_DESIGN_ROOT} " .
                    "+incdir+$ENV{UART_VERIF_ROOT}/env " .
-                   "$ENV{UART_VERIF_ROOT}/env/uart_interface.sv " .
+                   "+incdir+$ENV{UART_VERIF_ROOT}/env/rx " .
+                   "$ENV{UART_VERIF_ROOT}/env/rx/uart_rx_interface.sv " .
                    "$ENV{UART_DESIGN_ROOT}/*.sv " .
                    "$ENV{UART_VERIF_ROOT}/env/uart_env_pkg.sv " .
                    "$ENV{UART_VERIF_ROOT}/tests/uart_base_test.sv " .
@@ -92,3 +99,4 @@ sub run_simulation {
         die "Simulation failed!";
     }
 }
+
