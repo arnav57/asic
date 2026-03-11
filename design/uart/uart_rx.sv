@@ -40,6 +40,8 @@ module uart_rx #(
 
 	logic [8-1:0] rx_data_r  ;
 
+	wire in_idle;
+
 // define counter full conditions
 	assign cycle_cnt_full = (cycle_cnt_r == FULL_PERIOD - 1);
 	assign bit_cnt_full   = (bit_cnt_r   == UART_LENGTH - 1);
@@ -78,6 +80,8 @@ module uart_rx #(
 		.d   (rx_data_i    ),
 		.q   (rx_data_s2r  )
 	);
+
+	assign in_idle = (bit_cnt_r == '0);
 
 	always_ff @(posedge rx_clk_i) begin
 		if (~rstn_rx_clk_i) begin
