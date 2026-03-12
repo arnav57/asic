@@ -216,3 +216,7 @@ quartus/*/*
 !quartus/*/*.qsf
 !quartus/*/*.qpf
 !quartus/*/*.sdc
+
+# to make sure new env folders are tracked under verif
+!verif/*/env
+!scripts/compile/lib/
