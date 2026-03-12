@@ -208,3 +208,11 @@ __marimo__/
 # uvm and sims
 uvm/
 sim/
+
+# quartus stuff
+quartus/*
+!quartus/*
+quartus/*/*
+!quartus/*/*.qsf
+!quartus/*/*.qpf
+!quartus/*/*.sdc
