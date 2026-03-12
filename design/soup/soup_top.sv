@@ -10,7 +10,7 @@ module soup_top #(
 	output wire [7:0] dbg_data_o,
 	output wire 	  cmd_done_o,
 	output wire		  error_flag_o
-);
+	);
 
 
 // Connect UART Rx to SOUP COMMAND INPUTS
