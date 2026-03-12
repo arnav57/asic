@@ -45,11 +45,13 @@ sub run_uart_compile {
     my $vlog_cmd = "vlog -work $work -sv -mfcu -L uvm " .
                    "+incdir+$ENV{UART_DESIGN_ROOT} " .
                    "+incdir+$ENV{UART_VERIF_ROOT}/env " .
+                   "+incdir+$ENV{UART_VERIF_ROOT}/env/tx " .
                    "+incdir+$ENV{UART_VERIF_ROOT}/env/rx " .
+                   "$ENV{UART_VERIF_ROOT}/env/tx/uart_tx_interface.sv " .
                    "$ENV{UART_VERIF_ROOT}/env/rx/uart_rx_interface.sv " .
                    "$ENV{UART_DESIGN_ROOT}/*.sv " .
                    "$ENV{UART_VERIF_ROOT}/env/uart_env_pkg.sv " .
-                   "$ENV{UART_VERIF_ROOT}/tests/uart_base_test.sv " .
+                   "$ENV{UART_VERIF_ROOT}/tests/uart_loopback_test.sv " .
                    "$ENV{UART_VERIF_ROOT}/tb/uart_tb_top.sv";
 
     system($vlog_cmd) == 0 or die "UART Compilation Failed!";
@@ -73,7 +75,7 @@ sub run_simulation {
     my ($results_dir) = @_;
     print "\n--- STAGE: SIMULATION (vsim) ---\n";
     
-    my $test_name = "uart_base_test";
+    my $test_name = "uart_rx_base_test";
     my $log_file  = "$results_dir/sim.log";
     my $work_path = "$results_dir/work";
     my $vcd_file  = "$results_dir/waves.vcd"; # The output file

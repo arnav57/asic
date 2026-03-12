@@ -17,7 +17,7 @@ class uart_rx_monitor extends uvm_monitor;
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         ap = new("ap", this);
-        if(!uvm_config_db#(virtual uart_rx_interface)::get(this, "", "vif", vif)) begin
+        if(!uvm_config_db#(virtual uart_rx_interface)::get(this, "", "rx_vif", vif)) begin
             `uvm_fatal("NOVIF", "Virtual interface not found for monitor!")
         end
     endfunction
@@ -42,7 +42,7 @@ class uart_rx_monitor extends uvm_monitor;
             if (vif.rx_data_valid_o === 1'b1) begin
                 uart_transaction tr = uart_transaction::type_id::create("tr");
                 tr.data = vif.rx_data_o;
-                
+                @(posedge vif.clk); // let RX valid settle first, this settles race condition between TX/RX Writing into APs
                 ap.write(tr);
                 `uvm_info("UART-RX-MONITOR", $sformatf("Saw RTL output byte: 8'h%0h", tr.data), UVM_LOW)
             end

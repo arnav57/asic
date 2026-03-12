@@ -1,15 +1,15 @@
-class uart_rx_sequence extends uvm_sequence #(uart_transaction);
+class uart_tx_sequence extends uvm_sequence #(uart_transaction);
     // Register with UVM (Notice it's object_utils, not component_utils, because it's dynamic!)
-    `uvm_object_utils(uart_rx_sequence)
+    `uvm_object_utils(uart_tx_sequence)
 
     // Standard constructor
-    function new(string name = "uart_rx_sequence");
+    function new(string name = "uart_tx_sequence");
         super.new(name);
     endfunction
 
     // 1. The Body Task: This is the "main()" function of your sequence
     virtual task body();
-        `uvm_info("UART-RX-SEQ", "Starting UART RX sequence...", UVM_LOW)
+        `uvm_info("UART-TX-SEQ", "Starting UART TX sequence...", UVM_LOW)
 
         // Let's shoot 10 "random" UART frames into the RTL
         for (int i = 0; i < 10; i++) begin
@@ -32,10 +32,10 @@ class uart_rx_sequence extends uvm_sequence #(uart_transaction);
             finish_item(req);
 
             // Print a message so we can see what we generated
-            `uvm_info("UART-RX-SEQ", $sformatf("Sent random byte %0d/10: 8'h%0h", i+1, req.data), UVM_LOW)
+            `uvm_info("UART-TX-SEQ", $sformatf("Sent byte %0d/10: 8'h%0h", i+1, req.data), UVM_LOW)
         end
         
-        `uvm_info("UART-RX-SEQ", "UART RX sequence finished!", UVM_LOW)
+        `uvm_info("UART-TX-SEQ", "UART TX sequence finished!", UVM_LOW)
     endtask
 
 endclass

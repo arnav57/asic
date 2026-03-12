@@ -9,14 +9,17 @@ package uart_env_pkg;
     `include "uart_transaction.sv"
     
     // The Brain needs to know about the Data
-    `include "./rx/uart_rx_sequence.sv"
+    `include "./tx/uart_tx_sequence.sv"
     
     // The Workers need to know about the Data
-    `include "./rx/uart_rx_driver.sv"
+    `include "./tx/uart_tx_driver.sv"
     `include "./rx/uart_rx_monitor.sv"
     
     // The Controller needs to know about the Workers
     `include "./rx/uart_rx_agent.sv"
+    `include "./tx/uart_tx_agent.sv"
+
+    `include "uart_scoreboard.sv"
     
     // The Motherboard needs to know about the Controller
     `include "uart_env.sv"
