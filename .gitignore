@@ -219,4 +219,4 @@ quartus/*/*
 
 # to make sure new env folders are tracked under verif
 !verif/*/env
-!scripts/compile/lib/
+!scripts/lib/
