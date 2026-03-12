@@ -48,7 +48,7 @@ module uart_rx #(
 
 // define counter increment/reset conditions
 	assign cycle_cnt_next = (cycle_cnt_full) ? ('0) : (cycle_cnt_r + 'd1);
-	assign bit_cnt_next   = (bit_cnt_full)   ? ('0) : ( (cycle_cnt_full) ? (bit_cnt_r + 'd1) : (bit_cnt_r) );
+	assign bit_cnt_next   = (bit_cnt_full && cycle_cnt_full)   ? ('0) : ( (cycle_cnt_full) ? (bit_cnt_r + 'd1) : (bit_cnt_r) );
 
 // we are in the sample window if we are in the middle of the count (at the half period)
 // since cnt_enable_r goes high one CC after negedge, we subtract one here to make sure it samples
@@ -94,7 +94,7 @@ module uart_rx #(
 				cnt_enable_r <= 1'b1;
 			end else begin
 				// otherwise we check if the bit cnt is full and then stop the counter cuz we are done the frame atp
-				cnt_enable_r <= (bit_cnt_full) ? 1'd0 : cnt_enable_r;
+				cnt_enable_r <= (bit_cnt_full && cycle_cnt_full) ? 1'd0 : cnt_enable_r;
 			end
 		end
 	end
@@ -117,6 +117,6 @@ module uart_rx #(
 // passthrough the rx-data-r flops
 // also send out a valid pulse whenever we are done parsing the entire UART frame
 	assign rx_data_o       = rx_data_r;
-	assign rx_data_valid_o = bit_cnt_full;
+	assign rx_data_valid_o = bit_cnt_full && cycle_cnt_full;
 
 endmodule : uart_rx

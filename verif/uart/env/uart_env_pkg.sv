@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 package uart_env_pkg;
     // 1. Bring in the UVM library
     import uvm_pkg::*;

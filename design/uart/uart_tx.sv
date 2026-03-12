@@ -48,7 +48,7 @@ module uart_tx #(
 				cnt_enable_r <= 1'b1;
 			end else begin
 				uart_frame   <= uart_frame;
-				cnt_enable_r <= (bit_cnt_r == UART_LENGTH-1) ? (1'b0) : cnt_enable_r;
+				cnt_enable_r <= (bit_cnt_full && cycle_cnt_full) ? (1'b0) : cnt_enable_r;
 			end
 		end
 	end
@@ -59,7 +59,7 @@ module uart_tx #(
 
 // define counter increment/reset conditions
 	assign cycle_cnt_next = (cycle_cnt_full) ? ('0) : (cycle_cnt_r + 'd1);
-	assign bit_cnt_next   = (bit_cnt_full)   ? ('0) : ( (cycle_cnt_full) ? (bit_cnt_r + 'd1) : (bit_cnt_r) );
+	assign bit_cnt_next   = (bit_cnt_full && cycle_cnt_full)   ? ('0) : ( (cycle_cnt_full) ? (bit_cnt_r + 'd1) : (bit_cnt_r) );
 
 // implement counter
 	always_ff @(posedge tx_clk_i) begin

@@ -26,6 +26,28 @@ e_soup_cmd soup_cmd_st_r;
 logic [8-1:0] 	payload_size_r;
 logic 			error_flag_r;
 
+// Payload Down Counter
+logic [8-1:0] payload_remaining_r;
+wire  cnt_done;
+wire  cnt_enable = (soup_cmd_st_r == RCV_PAYLOAD);
+
+always_ff @(posedge soup_clk_i) begin
+	if(~soup_rstn_i) begin
+		payload_remaining_r <= 8'h00;
+	end else begin
+		if (cnt_enable) begin
+			if (data_rcv_valid_i) begin
+				payload_remaining_r <= payload_remaining_r - 1'b1;
+			end else begin
+				payload_remaining_r <= payload_remaining_r;
+			end
+		end else begin
+			payload_remaining_r <= payload_size_r;
+		end
+	end
+end
+assign cnt_done = (cnt_enable && payload_remaining_r == 8'b0);
+
 always_ff @(posedge soup_clk_i) begin
 	if(~soup_rstn_i) begin
 		 soup_cmd_st_r  <= IDLE;
@@ -120,27 +142,6 @@ end
 
 
 
-// Payload Down Counter
-logic [8-1:0] payload_remaining_r;
-wire  cnt_done;
-wire  cnt_enable = (soup_cmd_st_r == RCV_PAYLOAD);
-
-always_ff @(posedge soup_clk_i) begin
-	if(~soup_rstn_i) begin
-		payload_remaining_r <= 8'h00;
-	end else begin
-		if (cnt_enable) begin
-			if (data_rcv_valid_i) begin
-				payload_remaining_r <= payload_remaining_r - 1'b1;
-			end else begin
-				payload_remaining_r <= payload_remaining_r;
-			end
-		end else begin
-			payload_remaining_r <= payload_size_r;
-		end
-	end
-end
-assign cnt_done = (cnt_enable && payload_remaining_r == 8'b0);
 assign cmd_done_o = (soup_cmd_st_r == RESPOND);
 assign error_flag_o = error_flag_r;
 

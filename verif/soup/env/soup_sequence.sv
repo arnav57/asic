@@ -45,6 +45,7 @@ class soup_to_uart_seq extends uart_tx_sequence;
 
     // Helper task to send a byte to the UART Driver
     task send_byte(byte b);
+        uart_transaction u_tr;
         u_tr = uart_transaction::type_id::create("u_tr");
         start_item(u_tr);
         u_tr.data = b;

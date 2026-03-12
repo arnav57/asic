@@ -85,7 +85,7 @@ class soup_monitor extends uvm_monitor;
 
 			M_CHECK_STOP: begin
 				if (tr.data == 8'hCC) begin
-					`uvm_info("SOUP-MON", $sformatf("Packet Complete: %s", current_tr.toString()), UVM_LOW)
+					`uvm_info("SOUP-MON", $sformatf("Packet Complete: %s", current_tr.convert2string()), UVM_LOW)
 					soup_ap.write(current_tr); // Broadcast the completed transaction
 				end else begin
 					`uvm_error("SOUP-MON", $sformatf("Framing Error: Expected 0xCC, Got 0x%0h", tr.data))

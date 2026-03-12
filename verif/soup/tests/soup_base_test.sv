@@ -1,3 +1,8 @@
+import uvm_pkg::*;
+import uart_env_pkg::*;
+import soup_env_pkg::*;
+`include "uvm_macros.svh"
+
 class soup_base_test extends uvm_test;
 
 	`uvm_component_utils(soup_base_test)
@@ -34,7 +39,7 @@ class soup_base_test extends uvm_test;
 		test_seq = soup_sanity_seq::type_id::create("test_seq");
 		test_seq.start(env.s_agent.sqr);
 
-		#5000 ns;
+		#5000;
 		phase.drop_objection(this);
 	endtask : run_phase
 endclass : soup_base_test

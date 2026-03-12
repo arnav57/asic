@@ -1,6 +1,7 @@
 // Bring in UVM and our custom package!
 import uvm_pkg::*;
 import uart_env_pkg::*;
+`include "uvm_macros.svh"
 
 class uart_loopback_test extends uvm_test;
     `uvm_component_utils(uart_loopback_test)

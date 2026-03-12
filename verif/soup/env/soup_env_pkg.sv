@@ -1,4 +1,6 @@
-package soup_env_package;
+`timescale 1ns/1ps
+
+package soup_env_pkg;
 
 	import uvm_pkg::*;
 	import uart_env_pkg::*;
@@ -14,4 +16,4 @@ package soup_env_package;
 
 	`include "soup_env.sv"
 
-endpackage : soup_env_package
+endpackage : soup_env_pkg

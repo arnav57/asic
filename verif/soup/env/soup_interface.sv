@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 interface soup_interface (input logic clk, input logic rstn);
 	logic rx_pad;
 	logic tx_pad;

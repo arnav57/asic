@@ -1,5 +1,5 @@
 // verif/soup/soup_v.f
-./soup_interface.sv
+./env/soup_interface.sv
 +incdir+./env
 +incdir+./tests
 ./env/soup_env_pkg.sv

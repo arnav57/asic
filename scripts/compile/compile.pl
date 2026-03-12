@@ -6,7 +6,7 @@ use Cwd 'abs_path';
 use Getopt::Long;
 
 use lib dirname(abs_path($0)) . "/../lib";
-use ProjectConfig qw(get_project_env create_sim_dir get_module_paths);
+use ProjectConfig qw(get_project_env create_sim_dir get_module_paths open_wave_after);
 
 # --- 1. PARSE ARGUMENTS ---
 my $module_to_run = "soup"; # Default
@@ -31,7 +31,8 @@ my $repo    = $ENV{REPO_ROOT};
 
 # --- 3. THE BUILD STACK ---
 # Define dependencies: soup depends on uart and std
-my @stack = ("std", "uart", $module_to_run);
+my @stack = ("std", "uart");
+push(@stack, $module_to_run) unless grep { $_ eq $module_to_run } @stack;
 
 foreach my $mod (@stack) {
     print "\n>>> COMPILING MODULE: $mod <<<\n";
@@ -40,13 +41,15 @@ foreach my $mod (@stack) {
     # Compile Design (if exists)
     if (-e "$paths{design}/$mod.f") {
         print "  Design Files...\n";
-        system("vlog -work work -sv +incdir+$paths{design} -f $paths{design}/$mod.f") == 0 or die "Design compilation failed for $mod";
+        # Use -F to resolve relative paths in the .f file relative to the file location
+        system("vlog -work work -sv -mfcu +incdir+$paths{design} -F $paths{design}/$mod.f") == 0 or die "Design compilation failed for $mod";
     }
     
     # Compile Verification (if exists)
     if (-e "$paths{verif}/${mod}_v.f") {
         print "  Verif Files...\n";
-        system("vlog -work work -sv -L uvm +incdir+$paths{verif} -f $paths{verif}/${mod}_v.f") == 0 or die "Verif compilation failed for $mod";
+        # Use -F here too
+        system("vlog -work work -sv -mfcu -L uvm +incdir+$paths{verif} -F $paths{verif}/${mod}_v.f") == 0 or die "Verif compilation failed for $mod";
     }
 }
 
@@ -57,23 +60,22 @@ system("vopt -debug $top -o opt_top -L uvm") == 0 or die "vopt failed!";
 
 print "\n>>> STARTING SIMULATION: $test_name <<<\n";
 my $vcd_file = "$sim_dir/waves.vcd";
+my $log_file = "$sim_dir/sim.log";
 my $vsim_cmd;
 
 if ($wave) {
     # If wave is requested, add VCD dump commands to the -do string
     $vsim_cmd = "vsim -c -L uvm +UVM_TESTNAME=$test_name opt_top " .
-                "-do \"vcd file $vcd_file; vcd add -r /*; run -all; quit\"";
+                "-do \"vcd file $vcd_file; vcd add -r /*; run -all; quit\" | tee $log_file";
 } else {
-    $vsim_cmd = "vsim -c -L uvm +UVM_TESTNAME=$test_name opt_top -do \"run -all; quit\"";
+    $vsim_cmd = "vsim -c -L uvm +UVM_TESTNAME=$test_name opt_top -do \"run -all; quit\" | tee $log_file";
 }
 
 system($vsim_cmd) == 0 or die "Simulation failed!";
 
 # --- 5. OPEN WAVEFORM ---
 if ($wave) {
-    print "\n>>> OPENING WAVEFORMS: $vcd_file <<<\n";
-    # Call GTKWave in the background
-    system("gtkwave $vcd_file &");
+    open_wave_after($sim_dir);
 }
 
-print "\n>>> SIMULATION COMPLETE. LOG: $sim_dir/sim.log <<<\n";
+print "\n>>> SIMULATION COMPLETE. LOG: $log_file <<<\n";
