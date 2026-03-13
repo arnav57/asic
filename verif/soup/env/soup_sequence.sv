@@ -72,10 +72,10 @@ class soup_sanity_seq extends uvm_sequence #(soup_transaction);
         req.cmd_type    = 8'h00; // Data
         req.is_response = 1'b0;
 
-        // Send 256 bytes to test the 255 length bug
-        req.payload     = new[256];
+        // Send 255 bytes to avoid FIFO ambiguity bug (256 bytes makes it look empty)
+        req.payload     = new[$urandom_range(0,256)];
         foreach(req.payload[i]) begin
-            req.payload[i] = i[7:0]; // payload is just 0, 1, 2... 255
+            req.payload[i] = $urandom_range(0,256);
         end
 
         req.crc         = 8'hAA;

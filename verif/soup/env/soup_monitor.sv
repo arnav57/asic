@@ -61,7 +61,12 @@ class soup_monitor extends uvm_monitor;
 			end
 
 			M_RCV_LEN: begin
-				current_tr.payload = new[tr.data]; // Initialize the dynamic array size
+				// If length is 255, it means 256 bytes (special case for 256-deep FIFO)
+				if (tr.data == 8'd255) begin
+					current_tr.payload = new[256];
+				end else begin
+					current_tr.payload = new[tr.data]; // Initialize the dynamic array size
+				end
 				payload_count = 0;
 				if (tr.data == 0) begin
 					state_r = M_RCV_CRC;

@@ -11,6 +11,8 @@ package soup_env_pkg;
 	// Add these for the agent
 	`include "soup_sequencer.sv"
 	`include "soup_monitor.sv"
+	`include "soup_driver.sv"
+	`include "soup_scoreboard.sv"
 	`include "soup_agent.sv"
 	`include "soup_sequence.sv"
 

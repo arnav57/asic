@@ -16,7 +16,12 @@ module soup_rcv (
 	output wire         cmd_done_o          ,
 	output wire         error_flag_o        ,
 	// From SOUP Sender
-	input  wire         soup_response_done_i
+	input  wire         soup_response_done_i,
+	// FIFO Control
+	output wire         fifo_wr_en_o        ,
+	output wire [8-1:0] fifo_wr_data_o      ,
+	// Behaviour Control
+	input  wire         soup_loopback_en_i
 );
 
 	typedef enum logic [2:0] {
@@ -34,9 +39,10 @@ module soup_rcv (
 // Payload counter logic
 	logic [8-1:0] payload_size_r;
 	logic         error_flag_r  ;
+	logic         cmd_done_r    ;
 
 // Payload Down Counter
-	logic [8-1:0] payload_remaining_r                                 ;
+	logic [9-1:0] payload_remaining_r                                 ;
 	wire          cnt_done                                            ;
 	wire          cnt_enable          = (soup_cmd_st_r == RCV_PAYLOAD);
 
@@ -48,6 +54,7 @@ module soup_rcv (
 			soup_cmd_st_r  <= IDLE;
 			payload_size_r <= 8'b0;
 			error_flag_r   <= 1'b0;
+			cmd_done_r     <= 1'b0;
 		end else begin
 			case (soup_cmd_st_r)
 
@@ -76,6 +83,7 @@ module soup_rcv (
 				end
 
 				// in RCV_LEN state we have established we are sending a data frame, we need to properly configure the counter here
+				// The counter will handle latching in the data value and writing to the FIFO
 				RCV_LEN : begin
 					if (data_rcv_valid_i) begin
 						if (data_rcv_i == 8'b0) begin
@@ -120,9 +128,11 @@ module soup_rcv (
 					if (data_rcv_valid_i) begin
 						if (data_rcv_i == 8'hCC) begin
 							soup_cmd_st_r <= RESPOND;
+							cmd_done_r    <= 1'b1;
 							error_flag_r  <= 1'b0;
 						end else begin
 							soup_cmd_st_r <= RESPOND;
+							cmd_done_r    <= 1'b1;
 							error_flag_r  <= 1'b1;
 						end
 					end
@@ -132,6 +142,7 @@ module soup_rcv (
 				// these correspond with CMD_TYPE = 0x00 and CMD_TYPE = 0x01 respectively.
 				// here we just poll the soup sender for when its response is done!
 				RESPOND : begin
+					cmd_done_r <= 1'b0;
 					if (soup_response_done_i) begin
 						soup_cmd_st_r <= IDLE;
 					end
@@ -144,26 +155,41 @@ module soup_rcv (
 		end
 	end
 
+	// Signals for controlling FIFO
+	logic [7:0] 	fifo_wr_data_r;
+	logic 			fifo_wr_en_r;
+	logic 			fifo_wr_en_d1r;
+
 	always_ff @(posedge soup_clk_i) begin
 		if(~soup_rstn_i) begin
-			payload_remaining_r <= 8'h00;
+			payload_remaining_r <= 9'h00;
+			fifo_wr_en_r 		<= 1'b0;
+			fifo_wr_en_d1r		<= 1'b0;
+			fifo_wr_data_r      <= 8'b0;
 		end else begin
+			fifo_wr_en_d1r <= fifo_wr_en_r;
 			if (cnt_enable) begin
 				if (data_rcv_valid_i) begin
 					payload_remaining_r <= payload_remaining_r - 1'b1;
+					fifo_wr_data_r      <= data_rcv_i;
+					fifo_wr_en_r		<= 1'b1;
 				end else begin
 					payload_remaining_r <= payload_remaining_r;
+					fifo_wr_en_r        <= 1'b0;
 				end
 			end else begin
-				payload_remaining_r <= payload_size_r;
+				fifo_wr_en_r        <= 1'b0;
+				payload_remaining_r <= (payload_size_r == 8'd255) ? 9'd256 : {1'b0, payload_size_r};
 			end
 		end
 	end
 
 
-	assign cnt_done     = (cnt_enable && payload_remaining_r == 8'b0);
-	assign cmd_done_o   = (soup_cmd_st_r == RESPOND);
-	assign error_flag_o = error_flag_r;
+	assign cnt_done      	= (cnt_enable && data_rcv_valid_i && payload_remaining_r == 9'h1);
+	assign cmd_done_o    	= cmd_done_r;
+	assign error_flag_o  	= error_flag_r;
+	assign fifo_wr_en_o  	= fifo_wr_en_d1r;
+	assign fifo_wr_data_o 	= fifo_wr_data_r;
 
 
 endmodule : soup_rcv

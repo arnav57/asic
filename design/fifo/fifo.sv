@@ -23,7 +23,7 @@ module fifo #(
 
 
 // Declare the FIFO!
-	reg [FIFO_WIDTH-1:0] mem[FIFO_DEPTH-1:0];
+	reg [FIFO_WIDTH-1:0] mem [FIFO_DEPTH-1:0];
 
 // Local Signals
 	logic [  PTR_SIZE-1:0] rd_ptr_r ;
@@ -87,7 +87,7 @@ module fifo #(
 
 	// FIFO size can be found with a dedicated counter. Counts up on a write, and counts down on a read	
 	// define empty and full flags
-	assign fifo_empty_o = (rd_ptr_r == wr_ptr_r); 			// FIFO is empty when the read and write points are the same 
+	assign fifo_empty_o = (fifo_sz_r == 9'b0); 			// FIFO is empty when the read and write points are the same 
 	assign fifo_full_o  = (fifo_sz_r == FIFO_DEPTH);	// FIFO is full when the difference between them is the FIFO length
 	assign fifo_sz_o    = fifo_sz_r;
 	assign rd_ptr_o     = rd_ptr_r;

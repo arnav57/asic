@@ -76,4 +76,12 @@ module uart_tb_top;
         
     end
 
+    initial begin
+        if ($test$plusargs("WAVE")) begin
+            $dumpfile("waves.vcd");
+            $dumpvars(0, uart_tb_top);
+        end
+    end
+
+
 endmodule
