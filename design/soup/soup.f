@@ -1,3 +1,4 @@
 // design/soup/soup.f
-./soup_cmd_proc.sv
+./soup_rcv.sv
+./soup_send.sv
 ./soup_top.sv

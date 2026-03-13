@@ -111,6 +111,8 @@ class soup_monitor extends uvm_monitor;
 			@(posedge soup_vif.clk);
 			if (soup_vif.cmd_done) begin
 				`uvm_info("SOUP-MON", "Detected cmd_done pulse from DUT!", UVM_MEDIUM)
+				// Wait for the signal to go low again so we don't spam the log for every clock cycle the pulse is high
+				wait(soup_vif.cmd_done === 1'b0);
 			end
 		end
 	endtask : run_phase

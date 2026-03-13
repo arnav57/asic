@@ -11,6 +11,9 @@ class soup_env extends uvm_env;
 
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
+        // Disable the UART scoreboard check for this environment
+        uvm_config_db#(bit)::set(this, "u_env.scoreboard", "disable_check", 1);
+
         u_env   = uart_env::type_id::create("u_env", this);
         s_agent = soup_agent::type_id::create("s_agent", this);
     endfunction

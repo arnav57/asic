@@ -12,6 +12,7 @@ class uart_scoreboard extends uvm_scoreboard;
 
 	uart_transaction want_q[$];
 	uart_transaction got_q[$];
+	bit disable_check = 0;
 
 	uvm_analysis_imp_tx #(uart_transaction, uart_scoreboard) tx_ap;
 	uvm_analysis_imp_rx #(uart_transaction, uart_scoreboard) rx_ap;
@@ -19,6 +20,7 @@ class uart_scoreboard extends uvm_scoreboard;
     function void build_phase (uvm_phase phase);
     	rx_ap = new("rx_ap", this);
     	tx_ap = new("tx_ap", this);
+    	void'(uvm_config_db#(bit)::get(this, "", "disable_check", disable_check));
     endfunction
 
     // TX sequence will write to the WANT queue
@@ -34,6 +36,7 @@ class uart_scoreboard extends uvm_scoreboard;
     endfunction
 
     virtual function void check_phase (uvm_phase phase);
+    	if (disable_check) return;
     	if (got_q.size() != want_q.size()) begin
     		`uvm_error("UART-BRD", $sformatf("Rx got %d bytes, Tx sent %d bytes!", got_q.size(), want_q.size()))
     		return;

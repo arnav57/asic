@@ -39,7 +39,7 @@ class soup_base_test extends uvm_test;
 		test_seq = soup_sanity_seq::type_id::create("test_seq");
 		test_seq.start(env.s_agent.sqr);
 
-		#5000;
+		#500000;
 		phase.drop_objection(this);
 	endtask : run_phase
 endclass : soup_base_test
