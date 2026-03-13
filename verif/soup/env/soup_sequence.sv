@@ -26,7 +26,10 @@ class soup_to_uart_seq extends uart_tx_sequence;
                 `uvm_info("SOUP_LAYER", "Sending Payload...", UVM_LOW)
                 
                 // [TODO 3: Send the Length byte]
-                send_byte(s_tr.payload.size());
+                if (s_tr.payload.size() == 256)
+                    send_byte(8'd255);
+                else
+                    send_byte(s_tr.payload.size());
                 
                 // Send the payload array
                 foreach(s_tr.payload[i]) begin
@@ -35,7 +38,7 @@ class soup_to_uart_seq extends uart_tx_sequence;
             end
 
             // [TODO 4: Send the CRC byte and the STOP byte (0xCC)]
-            send_byte(8'h00);
+            send_byte(8'hAA);
             send_byte(8'hCC);
             
             // Finish the item on the SOUP sequencer
@@ -66,16 +69,16 @@ class soup_sanity_seq extends uvm_sequence #(soup_transaction);
         req = soup_transaction::type_id::create("req");
         start_item(req);
 
-        req.cmd_type    = 8'h01;
+        req.cmd_type    = 8'h00; // Data
         req.is_response = 1'b0;
 
-        req.payload     = new[4];
-        req.payload[0]  = 8'hDE;
-        req.payload[1]  = 8'hAD;
-        req.payload[2]  = 8'hBE;
-        req.payload[3]  = 8'hEF;
+        // Send 256 bytes to test the 255 length bug
+        req.payload     = new[256];
+        foreach(req.payload[i]) begin
+            req.payload[i] = i[7:0]; // payload is just 0, 1, 2... 255
+        end
 
-        req.crc         = 8'h00;
+        req.crc         = 8'hAA;
 
         finish_item(req);
     endtask : body

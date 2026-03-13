@@ -20,7 +20,10 @@ module soup_send (
 	// To/From External Source
 	input  wire         start_data_i        ,
 	input  wire [8-1:0] data_i              ,
-	output wire         soup_data_done_o
+	output wire         soup_data_done_o    ,
+	// FIFO Control
+	input  wire         fifo_wr_en_i        ,
+	input  wire [8-1:0] fifo_wr_data_i
 );
 
 
@@ -35,6 +38,7 @@ module soup_send (
 		TX_WAIT		// 3'd7
 	} e_soup_cmd;
 
+// Local Signals (FSM)
 	e_soup_cmd  soup_tx_st_r        ;
 	logic       error_flag_r        ;
 	logic [7:0] tx_data_r           ;
@@ -45,6 +49,15 @@ module soup_send (
 	logic       cmd_type_data       ;
 	logic       soup_response_done_r;
 	logic       soup_data_done_r    ;
+// Local Signals (FIFO)
+	logic       fifo_rd_en_r  ;
+	wire  [7:0] fifo_rd_data  ;
+	wire  [8:0] fifo_rd_ptr   ;
+	wire  [8:0] fifo_wr_ptr   ;
+	wire  [8:0] fifo_sz       ;
+	wire        fifo_full     ;
+	wire        fifo_empty    ;
+	logic [8:0] loop_cnt_r    ;
 
 	always_ff @(posedge soup_clk_i) begin
 		if(~soup_rstn_i) begin
@@ -58,6 +71,8 @@ module soup_send (
 			cmd_type_data        <= 1'b0;
 			soup_response_done_r <= 1'b0;
 			soup_data_done_r     <= 1'b0;
+			// loop counter for TX_PAYLOAD state
+			loop_cnt_r           <= 9'h0;
 		end else begin
 			case (soup_tx_st_r)
 
@@ -84,6 +99,7 @@ module soup_send (
 				// In TX_WAIT we lower the data valid r signal, and wait for the tx to be done sending whatever its sending rn
 				TX_WAIT : begin
 					tx_data_valid_r <= 1'b0;
+					fifo_rd_en_r    <= 1'b0;
 					if (tx_busy_i) begin
 						waiting_on_tx_r <= 1'b1;
 					end
@@ -139,29 +155,44 @@ module soup_send (
 					end
 				end
 
+				// The fifo's read-reqest sends data out after 1 cc
+				// the loop for entinering payload is LEN -> WAIT -> PAYLOAD -> WAIT -> PAYLOAD -> WAIT -> ... -> CRC
+				// In order to have the data ready in PAYLOAD state, we need to have the fifo_rd_en high in WAIT state,
+				// This means we must set it high in LEN state, and in PAYLOAD state. and can lower it in WAIT state
+				// If we latch loop_cnt_r to fifo_sz - 1, we go to payload state twice!
 
-				// In TX_LEN we send the length of the payload. Right now we hard code it to 1 for passthru
+				// ex. for payload of fifo_sz == 'd2
+				// 		LEN     -> WAIT     -> PAYLOAD     -> WAIT     -> PAYLOAD     -> WAIT     -> CRC
+
+				// In TX_LEN we send the length of the payload.
+				// We ASSUME that the FIFO is filled with the payload data prior to reaching this state
 				TX_LEN : begin
 					if (~tx_busy_i) begin
-						tx_data_r       <= 8'h01;
+						tx_data_r       <= (fifo_sz == 'd256) ? fifo_sz - 1'd1 : fifo_sz[7:0];  // items remaining in fifo (in the case where sz=256, this ensures it fits in 8bits)
+						loop_cnt_r      <= fifo_sz - 1'd1; 	// items remaining in fifo
 						tx_data_valid_r <= 1'b1;
 						soup_tx_st_r    <= TX_WAIT;
 						return_state_r  <= TX_PAYLOAD;
+						fifo_rd_en_r    <= 1'b1;
 					end
 				end
 
-				// In TX_PAYLOAD we send the payload, right now we hard code the payload to FF for passthru
+				// In TX_PAYLOAD we latch one byte of the payload at a time, until the fifo is empty!
+				// We also launch a read from the FIFO in this state
 				TX_PAYLOAD : begin
 					if (~tx_busy_i) begin
-						tx_data_r       <= 8'hFF;
+						tx_data_r       <= fifo_rd_data;
 						tx_data_valid_r <= 1'b1;
 						soup_tx_st_r    <= TX_WAIT;
-						return_state_r  <= TX_CRC;
+						return_state_r  <= (loop_cnt_r == 9'b0) ? TX_CRC : TX_PAYLOAD;
+						loop_cnt_r      <= loop_cnt_r - 9'd1;
+						fifo_rd_en_r    <= 1'b1;
 					end
 				end
 
 				// In TX_CRC we send the CRC, right now we hard code the CRC to AA for passthru
 				TX_CRC : begin
+					fifo_rd_en_r <= 1'b0;
 					if (~tx_busy_i) begin
 						tx_data_r       <= 8'hAA;
 						tx_data_valid_r <= 1'b1;
@@ -174,6 +205,28 @@ module soup_send (
 			endcase
 		end
 	end
+
+
+
+	// SOUP FIFO!
+	fifo #(
+		.FIFO_DEPTH(256),   // max number of payload length!
+		.FIFO_WIDTH(8  )    // UART FSM is 8N1, thus need 8 bits per slot here
+	) I_soup_fifo (
+		.fifo_clk_i  (soup_clk_i    ),
+		.fifo_rstn_i (soup_rstn_i   ),
+		.wr_en_i     (fifo_wr_en_i  ),
+		.wr_data_i   (fifo_wr_data_i),
+		.rd_en_i     (fifo_rd_en_r  ),
+		.rd_data_o   (fifo_rd_data  ),
+		.rd_ptr_o    (fifo_rd_ptr   ),
+		.wr_ptr_o    (fifo_wr_ptr   ),
+		.fifo_sz_o   (fifo_sz       ),
+		.fifo_full_o (fifo_full     ),
+		.fifo_empty_o(fifo_empty    )
+	);
+
+
 
 
 	// wire up stuff to TLIO
