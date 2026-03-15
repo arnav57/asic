@@ -2,8 +2,7 @@
 
 module fifo #(
 	parameter  FIFO_DEPTH = 256                   ,
-	parameter  FIFO_WIDTH = 8                     ,
-	localparam PTR_SIZE   = $clog2(FIFO_DEPTH) + 1
+	parameter  FIFO_WIDTH = 8                     
 ) (
 	input  wire                  fifo_clk_i ,
 	input  wire                  fifo_rstn_i,
@@ -21,6 +20,7 @@ module fifo #(
 	output wire 				 fifo_empty_o
 );
 
+	localparam PTR_SIZE   = $clog2(FIFO_DEPTH) + 1;
 
 // Declare the FIFO!
 	reg [FIFO_WIDTH-1:0] mem [FIFO_DEPTH-1:0];

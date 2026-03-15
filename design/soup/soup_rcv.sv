@@ -179,7 +179,7 @@ module soup_rcv (
 				end
 			end else begin
 				fifo_wr_en_r        <= 1'b0;
-				payload_remaining_r <= (payload_size_r == 8'd255) ? 9'd256 : {1'b0, payload_size_r};
+				payload_remaining_r <= payload_size_r;
 			end
 		end
 	end

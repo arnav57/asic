@@ -1,0 +1,113 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 2020  Intel Corporation. All rights reserved.
+# Your use of Intel Corporation's design tools, logic functions 
+# and other software and tools, and any partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Intel Program License 
+# Subscription Agreement, the Intel Quartus Prime License Agreement,
+# the Intel FPGA IP License Agreement, or other applicable license
+# agreement, including, without limitation, that your use is for
+# the sole purpose of programming logic devices manufactured by
+# Intel and sold by Intel or its authorized distributors.  Please
+# refer to the applicable agreement for further details, at
+# https://fpgasoftware.intel.com/eula.
+#
+# -------------------------------------------------------------------------- #
+
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE115F29C7
+set_global_assignment -name TOP_LEVEL_ENTITY soup_top
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 20.1.0
+set_global_assignment -name LAST_QUARTUS_VERSION "20.1.0 Lite Edition"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+
+# -------------------------------------------------------------------------- #
+# Source Files
+# -------------------------------------------------------------------------- #
+set_global_assignment -name SYSTEMVERILOG_FILE ../../design/std/std_data_sync.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../design/std/std_rstn_sync.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../design/fifo/fifo.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../design/uart/uart_rx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../design/uart/uart_tx.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../design/uart/uart_top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../design/soup/soup_rcv.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../design/soup/soup_send.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../design/soup/soup_top.sv
+
+# -------------------------------------------------------------------------- #
+# Timing Constraints
+# -------------------------------------------------------------------------- #
+set_global_assignment -name SDC_FILE soup_top.sdc
+
+# -------------------------------------------------------------------------- #
+# Clock + Reset
+# -------------------------------------------------------------------------- #
+# 50MHz oscillator on DE2-115
+set_location_assignment PIN_Y2 -to soup_clk_i
+
+# KEY[0] active-low reset button
+set_location_assignment PIN_M23 -to soup_rstn_i
+
+# -------------------------------------------------------------------------- #
+# UART PAD Pins (GPIO_0 header)
+# White wire (cable TXD) -> FPGA RX
+set_location_assignment PIN_AE15 -to PAD_RX
+
+# Green wire (cable RXD) <- FPGA TX
+set_location_assignment PIN_AE16 -to PAD_TX
+
+# -------------------------------------------------------------------------- #
+# Debug output - dbg_data_o[7:0] -> LEDR[7:0]
+# -------------------------------------------------------------------------- #
+set_location_assignment PIN_G19 -to dbg_data_o[0]
+set_location_assignment PIN_F19 -to dbg_data_o[1]
+set_location_assignment PIN_E19 -to dbg_data_o[2]
+set_location_assignment PIN_F21 -to dbg_data_o[3]
+set_location_assignment PIN_F18 -to dbg_data_o[4]
+set_location_assignment PIN_E18 -to dbg_data_o[5]
+set_location_assignment PIN_J19 -to dbg_data_o[6]
+set_location_assignment PIN_H19 -to dbg_data_o[7]
+
+# -------------------------------------------------------------------------- #
+# Status outputs - Green LEDs
+# -------------------------------------------------------------------------- #
+# cmd_done_o -> LEDG[0]
+set_location_assignment PIN_E21 -to cmd_done_o
+
+# error_flag_o -> LEDG[1]
+set_location_assignment PIN_E22 -to error_flag_o
+
+# soup_data_done_o -> LEDG[2]
+set_location_assignment PIN_E25 -to soup_data_done_o
+
+# -------------------------------------------------------------------------- #
+# Control inputs - Switches
+# -------------------------------------------------------------------------- #
+# SW[0] - soup_loopback_en_i: slide up to enable loopback mode
+set_location_assignment PIN_AB28 -to soup_loopback_en_i
+
+# SW[1] - fifo_wr_en_i: slide up to enable FIFO write
+set_location_assignment PIN_AC28 -to fifo_wr_en_i
+
+# -------------------------------------------------------------------------- #
+# Unused ports tied off
+# -------------------------------------------------------------------------- #
+# start_data_i, data_i[7:0], fifo_wr_data_i[7:0] not connected to pins
+# Quartus will tie these off via RESERVE_ALL_UNUSED_PINS below
+
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -82,6 +82,6 @@ uart_rx #(
 	.rx_data_valid_o(rx_data_valid_int)
 );
 
-assign dbg_data_o [7:0] = tx_data_int;
+assign dbg_data_o [7:0] = rx_data_r;
 
 endmodule : uart_top
