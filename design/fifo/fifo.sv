@@ -2,7 +2,8 @@
 
 module fifo #(
 	parameter  FIFO_DEPTH = 256                   ,
-	parameter  FIFO_WIDTH = 8                     
+	parameter  FIFO_WIDTH = 8                     ,
+	parameter  _PTR_SIZE   = $clog2(FIFO_DEPTH) + 1  // derived, DO NOT OVERRIDE!
 ) (
 	input  wire                  fifo_clk_i ,
 	input  wire                  fifo_rstn_i,
@@ -13,23 +14,21 @@ module fifo #(
 	input  wire                  rd_en_i    ,
 	output wire [FIFO_WIDTH-1:0] rd_data_o  ,
 	// FIFO State
-	output wire [  PTR_SIZE-1:0] rd_ptr_o   ,
-	output wire [  PTR_SIZE-1:0] wr_ptr_o   ,
-	output wire [  PTR_SIZE-1:0] fifo_sz_o	,
+	output wire [  _PTR_SIZE-1:0] rd_ptr_o   ,
+	output wire [  _PTR_SIZE-1:0] wr_ptr_o   ,
+	output wire [  _PTR_SIZE-1:0] fifo_sz_o	,
 	output wire 				 fifo_full_o,
 	output wire 				 fifo_empty_o
 );
-
-	localparam PTR_SIZE   = $clog2(FIFO_DEPTH) + 1;
 
 // Declare the FIFO!
 	reg [FIFO_WIDTH-1:0] mem [FIFO_DEPTH-1:0];
 
 // Local Signals
-	logic [  PTR_SIZE-1:0] rd_ptr_r ;
-	logic [  PTR_SIZE-1:0] wr_ptr_r ;
+	logic [  _PTR_SIZE-1:0] rd_ptr_r ;
+	logic [  _PTR_SIZE-1:0] wr_ptr_r ;
 	logic [FIFO_WIDTH-1:0] rd_data_r;
-	logic [  PTR_SIZE-1:0] fifo_sz_r;
+	logic [  _PTR_SIZE-1:0] fifo_sz_r;
 
 	wire actually_read, actually_write;
 	assign actually_write = (wr_en_i && !fifo_full_o);
@@ -55,7 +54,7 @@ module fifo #(
 					wr_ptr_r  <= (wr_ptr_r == FIFO_DEPTH-1) ? 'd0 : (wr_ptr_r + 'd1);
 					fifo_sz_r <= fifo_sz_r + 'd1;
 
-					mem[wr_ptr_r[PTR_SIZE-2:0]] <= wr_data_i;
+					mem[wr_ptr_r[_PTR_SIZE-2:0]] <= wr_data_i;
 				end
 
 				(2'b10): begin
@@ -63,7 +62,7 @@ module fifo #(
 					rd_ptr_r  <= (rd_ptr_r == FIFO_DEPTH-1) ? 'd0 : (rd_ptr_r + 'd1);
 					fifo_sz_r <= fifo_sz_r - 'd1;
 
-					rd_data_r <= mem[rd_ptr_r[PTR_SIZE-2:0]];
+					rd_data_r <= mem[rd_ptr_r[_PTR_SIZE-2:0]];
 				end
 
 				(2'b11): begin
@@ -71,8 +70,8 @@ module fifo #(
 					rd_ptr_r  <= (rd_ptr_r == FIFO_DEPTH-1) ? 'd0 : (rd_ptr_r + 'd1);
 					wr_ptr_r  <= (wr_ptr_r == FIFO_DEPTH-1) ? 'd0 : (wr_ptr_r + 'd1);
 
-					rd_data_r <= mem[rd_ptr_r[PTR_SIZE-2:0]];
-					mem[wr_ptr_r[PTR_SIZE-2:0]] <= wr_data_i;
+					rd_data_r <= mem[rd_ptr_r[_PTR_SIZE-2:0]];
+					mem[wr_ptr_r[_PTR_SIZE-2:0]] <= wr_data_i;
 				end
 
 				default: begin
