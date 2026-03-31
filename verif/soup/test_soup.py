@@ -35,7 +35,7 @@ async def reset_dut(dut):
     # Inputs initialization
     dut.PAD_RX.value = 1
     dut.start_data_i.value = 0
-    dut.data_i.value = 0
+    dut.cmd_type_i.value = 0
     dut.fifo_wr_en_i.value = 0
     dut.fifo_wr_data_i.value = 0
     dut.soup_loopback_en_i.value = 0

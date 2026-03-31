@@ -19,7 +19,7 @@ module soup_send (
 	output wire         soup_response_done_o,
 	// To/From External Source
 	input  wire         start_data_i        ,
-	input  wire [8-1:0] data_i              ,
+	input  wire [8-1:0] cmd_type_i          ,
 	output wire         soup_data_done_o    ,
 	// FIFO Control
 	output wire         fifo_rd_en_o        ,
@@ -138,7 +138,7 @@ module soup_send (
 							tx_data_valid_r <= 1'b1;
 							return_state_r  <= TX_STOP;
 						end else begin
-							tx_data_r       <= data_i;
+							tx_data_r       <= cmd_type_i;
 							tx_data_valid_r <= 1'b1;
 							return_state_r  <= TX_LEN;
 						end

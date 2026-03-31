@@ -12,7 +12,7 @@ module soup_top #(
 	output wire       error_flag_o      ,
 	input  wire       start_data_i      ,
 	input  wire       tx_start_i        ,
-	input  wire [7:0] data_i            ,
+	input  wire [7:0] cmd_type_i        ,
 	output wire       soup_data_done_o  ,
 	input  wire       fifo_wr_en_i      ,
 	input  wire [7:0] fifo_wr_data_i    ,
@@ -74,14 +74,14 @@ module soup_top #(
 		.start_response_i    (soup_cmd_done         ),
 		.soup_response_done_o(soup_response_done_int),
 		.start_data_i        (send_tx_start         ),
-		.data_i              (send_tx_data          ),
+		.cmd_type_i          (send_tx_data          ),
 		.soup_data_done_o    (soup_data_done_int    ),
 		.fifo_rd_en_o        (fifo_rd_en_send       ),
 		.fifo_rd_data_i      (consumer_fifo_rd_data ),
 		.fifo_size_i         (consumer_fifo_sz      )
 	);
 
-// SOUP Command Decoder (FIFO Abstraction MUX)
+// SOUP Command Decoder (FIFO + TX Abstraction MUX)
 
 	soup_cmd_decode I_soup_cmd_decode (
 		.soup_cmd_i                (soup_cmd_int_rcv        ),
@@ -89,7 +89,7 @@ module soup_top #(
 		.soup_response_done_i      (soup_response_done_int  ),
 		.soup_start_data_loopback_o(soup_start_data_loopback),
 		.user_tx_start_i           (tx_start_i              ),
-		.user_tx_data_i            (data_i                  ),
+		.user_tx_data_i            (cmd_type_i              ),
 		.send_tx_start_o           (send_tx_start           ),
 		.send_tx_data_o            (send_tx_data            ),
 		.direct_fifo_wr_en_o       (direct_fifo_wr_en       ),
