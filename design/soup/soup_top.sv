@@ -1,6 +1,6 @@
 module soup_top #(
 	parameter LOGIC_FREQ  = 50_000_000,
-	parameter BAUD_RATE   = 1_000_000   ,
+	parameter BAUD_RATE   = 1_000_000 ,
 	parameter UART_LENGTH = 10
 ) (
 	input  wire       PAD_RX            ,
@@ -28,28 +28,20 @@ module soup_top #(
 	wire       error_flag_int        ;
 	wire       cmd_done_int          ;
 	wire       soup_response_done_int;
+	wire       soup_data_done_int    ;
 
-// SOUP TO/FROM FIFO
-	wire       fifo_rd_en_int  ;
-	wire [7:0] fifo_rd_data_int;
-	wire [8:0] fifo_size_int   ;
-	wire       fifo_wr_en_rcv  ;
-	wire [7:0] fifo_wr_data_rcv;
-	wire       fifo_wr_en_int  ;
-	wire [7:0] fifo_wr_data_int;
-	wire	   tx_start_loopback_int;
-	wire [7:0] tx_loopback_data_int;
-	wire	   soup_data_done_int;
-
-//////// [!] BEGIN TODO: Move this logic into a new command_decode module
-// If SOUP is configured to be in loopback, the RX Controls the FIFO writes.
-// Otherwise the User controls these writes with TLIO
-	assign fifo_wr_en_int   = (soup_loopback_en_i) ? fifo_wr_en_rcv   : fifo_wr_en_i;
-	assign fifo_wr_data_int = (soup_loopback_en_i) ? fifo_wr_data_rcv : fifo_wr_data_i;
-// Similarly, if SOUP is in loopback the TX is supposed to read from the FIFO, otherwise user can provide it
-	assign tx_start_loopback_int = (soup_loopback_en_i) ? (soup_response_done_int) : start_data_i;
-	assign tx_loopback_data_int  = (soup_loopback_en_i) ? 8'h00 : data_i;
-//////// [!] END TODO
+// SOUP TO/FROM CMD DECODER (FIFO)
+	wire       fifo_rd_en_send      ;
+	wire       fifo_wr_en_rcv       ;
+	wire [7:0] fifo_wr_data_rcv     ;
+	wire [7:0] soup_cmd_int_rcv     ;
+	wire       direct_fifo_wr_en    ;
+	wire [7:0] direct_fifo_wr_data  ;
+	wire       direct_fifo_rd_en    ;
+	wire [7:0] direct_fifo_rd_data  ;
+	wire [8:0] direct_fifo_sz       ;
+	wire [8:0] consumer_fifo_sz     ;
+	wire [7:0] consumer_fifo_rd_data;
 
 // SOUP Reciever FSM
 	soup_rcv I_soup_rcv (
@@ -61,7 +53,8 @@ module soup_top #(
 		.error_flag_o        (error_flag_int        ),
 		.soup_response_done_i(soup_response_done_int),
 		.fifo_wr_en_o        (fifo_wr_en_rcv        ),
-		.fifo_wr_data_o      (fifo_wr_data_rcv      )
+		.fifo_wr_data_o      (fifo_wr_data_rcv      ),
+		.soup_cmd_o          (soup_cmd_int_rcv      )
 	);
 
 // Soup Transmitter FSM
@@ -77,29 +70,47 @@ module soup_top #(
 		.start_data_i        (tx_start_loopback_int ),
 		.data_i              (tx_loopback_data_int  ),
 		.soup_data_done_o    (soup_data_done_int    ),
-		.fifo_rd_en_o        (fifo_rd_en_int        ),
-		.fifo_rd_data_i      (fifo_rd_data_int      ),
-		.fifo_size_i         (fifo_size_int         )
+		.fifo_rd_en_o        (fifo_rd_en_send       ),
+		.fifo_rd_data_i      (consumer_fifo_rd_data ),
+		.fifo_size_i         (consumer_fifo_sz      )
 	);
 
-	assign soup_data_done_o = soup_data_done_int;
+// SOUP Command Decoder (FIFO Abstraction MUX)
+
+	soup_cmd_decode I_soup_cmd_decode (
+		.soup_cmd_i             (soup_cmd_int_rcv     ),
+		.direct_fifo_wr_en_o    (direct_fifo_wr_en    ),
+		.direct_fifo_wr_data_o  (direct_fifo_wr_data  ),
+		.direct_fifo_rd_en_o    (direct_fifo_rd_en    ),
+		.direct_fifo_rd_data_i  (direct_fifo_rd_data  ),
+		.direct_fifo_sz_i       (direct_fifo_sz       ),
+		.consumer_fifo_rd_data_o(consumer_fifo_rd_data),
+		.consumer_fifo_sz_o     (consumer_fifo_sz     ),
+		.user_fifo_wr_en_i      (fifo_wr_en_i         ),
+		.user_fifo_wr_data_i    (fifo_wr_data_i       ),
+		.rcv_fifo_wr_en_i       (fifo_wr_en_rcv       ),
+		.rcv_fifo_wr_data_i     (fifo_wr_data_rcv     ),
+		.user_fifo_rd_en_i      (fifo_rd_en_i         ),
+		.send_fifo_rd_en_i      (fifo_rd_en_send      )
+	);
+
 
 // SOUP FIFO!
 	fifo #(
 		.FIFO_DEPTH(256),   // max number of payload length!
 		.FIFO_WIDTH(8  )    // UART FSM is 8N1, thus need 8 bits per slot here
 	) I_soup_fifo (
-		.fifo_clk_i  (soup_clk_i      ),
-		.fifo_rstn_i (soup_rstn_i     ),
-		.wr_en_i     (fifo_wr_en_int  ),
-		.wr_data_i   (fifo_wr_data_int),
-		.rd_en_i     (fifo_rd_en_int  ),
-		.rd_data_o   (fifo_rd_data_int),
-		.rd_ptr_o    (/*		    */),
-		.wr_ptr_o    (/*		    */),
-		.fifo_sz_o   (fifo_size_int   ),
-		.fifo_full_o (/*            */),
-		.fifo_empty_o(/*            */)
+		.fifo_clk_i  (soup_clk_i         ),
+		.fifo_rstn_i (soup_rstn_i        ),
+		.wr_en_i     (direct_fifo_wr_en  ),
+		.wr_data_i   (direct_fifo_wr_data),
+		.rd_en_i     (direct_fifo_rd_en  ),
+		.rd_data_o   (direct_fifo_rd_data),
+		.rd_ptr_o    (/*		    */         ),
+		.wr_ptr_o    (/*		    */         ),
+		.fifo_sz_o   (direct_fifo_sz     ),
+		.fifo_full_o (/*            */   ),
+		.fifo_empty_o(/*            */   )
 	);
 
 
@@ -124,7 +135,8 @@ module soup_top #(
 	);
 
 
-	assign error_flag_o = error_flag_int;
-	assign cmd_done_o   = cmd_done_int;
+	assign error_flag_o     = error_flag_int;
+	assign cmd_done_o       = cmd_done_int;
+	assign soup_data_done_o = soup_data_done_int;
 
 endmodule : soup_top
