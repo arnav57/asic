@@ -37,13 +37,18 @@ module soup_top #(
 	wire [7:0] fifo_wr_data_rcv;
 	wire       fifo_wr_en_int  ;
 	wire [7:0] fifo_wr_data_int;
+	wire	   tx_start_loopback_int;
+	wire [7:0] tx_data_int
 
-
-// If SOUP is configured to be in loopback, the RX Controls the FIFO.
-// Otherwise the User controls it with TLIO
+//////// [!] BEGIN TODO: Move this logic into a new command_decode module
+// If SOUP is configured to be in loopback, the RX Controls the FIFO writes.
+// Otherwise the User controls these writes with TLIO
 	assign fifo_wr_en_int   = (soup_loopback_en_i) ? fifo_wr_en_rcv   : fifo_wr_en_i;
 	assign fifo_wr_data_int = (soup_loopback_en_i) ? fifo_wr_data_rcv : fifo_wr_data_i;
-
+// Similarly, if SOUP is in loopback the TX is supposed to read from the FIFO, otherwise user can provide it
+	assign tx_start_loopback_int = (soup_loopback_en_i) ? (soup_response_done_int) : start_data_i
+	assign tx_data_int 			 = (soup_loopback_en_i) ? 8'h00 : data_i;
+//////// [!] END TODO
 
 // SOUP Reciever FSM
 	soup_rcv I_soup_rcv (
@@ -59,22 +64,7 @@ module soup_top #(
 		.soup_loopback_en_i  (soup_loopback_en_i    )
 	);
 
-
-// SOUP Sender FSM
-	wire soup_data_done_int;
-	logic start_data_loopback_r;
-	always_ff @(posedge soup_clk_i) begin
-		if (~soup_rstn_i) begin
-			start_data_loopback_r <= 1'b0;
-		end else begin
-			if (soup_loopback_en_i && soup_response_done_int) begin
-				start_data_loopback_r <= 1'b1;
-			end else begin
-				start_data_loopback_r <= 1'b0;
-			end
-		end
-	end
-
+// Soup Transmitter FSM
 	soup_send I_soup_send (
 		.soup_clk_i          (soup_clk_i            ),
 		.soup_rstn_i         (soup_rstn_i           ),
@@ -84,9 +74,9 @@ module soup_top #(
 		.error_flag_i        (error_flag_int        ),
 		.start_response_i    (cmd_done_int          ),
 		.soup_response_done_o(soup_response_done_int),
-		.start_data_i        (soup_loopback_en_i ? start_data_loopback_r : start_data_i),
-		.data_i              (soup_loopback_en_i ? 8'h00 : data_i),
-		.soup_data_done_o    (soup_data_done_int),
+		.start_data_i        (tx_start_loopback_int ),
+		.data_i              (tx_data_int           ),
+		.soup_data_done_o    (soup_data_done_int    ),
 		.fifo_rd_en_o        (fifo_rd_en_int        ),
 		.fifo_rd_data_i      (fifo_rd_data_int      ),
 		.fifo_size_i         (fifo_size_int         )
@@ -105,8 +95,8 @@ module soup_top #(
 		.wr_data_i   (fifo_wr_data_int),
 		.rd_en_i     (fifo_rd_en_int  ),
 		.rd_data_o   (fifo_rd_data_int),
-		.rd_ptr_o    (/*		    */      ),
-		.wr_ptr_o    (/*		    */      ),
+		.rd_ptr_o    (/*		    */),
+		.wr_ptr_o    (/*		    */),
 		.fifo_sz_o   (fifo_size_int   ),
 		.fifo_full_o (/*            */),
 		.fifo_empty_o(/*            */)
