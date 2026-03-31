@@ -1,6 +1,6 @@
 module soup_top #(
 	parameter LOGIC_FREQ  = 50_000_000,
-	parameter BAUD_RATE   = 115_200   ,
+	parameter BAUD_RATE   = 1_000_000   ,
 	parameter UART_LENGTH = 10
 ) (
 	input  wire       PAD_RX            ,

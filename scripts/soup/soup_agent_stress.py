@@ -9,7 +9,7 @@ class SoupInterface:
     CMD_DATA   = 0x00  
     DUMMY_CRC  = 0xAA  
 
-    def __init__(self, port, baudrate=115200):
+    def __init__(self, port, baudrate=1e6):
         print(f"Opening physical bridge on {port} at {baudrate} baud...")
         self.ser = serial.Serial(port, baudrate, timeout=1.0) 
         self.ser.reset_input_buffer()
