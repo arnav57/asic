@@ -38,7 +38,8 @@ module soup_top #(
 	wire       fifo_wr_en_int  ;
 	wire [7:0] fifo_wr_data_int;
 	wire	   tx_start_loopback_int;
-	wire [7:0] tx_data_int
+	wire [7:0] tx_loopback_data_int;
+	wire	   soup_data_done_int;
 
 //////// [!] BEGIN TODO: Move this logic into a new command_decode module
 // If SOUP is configured to be in loopback, the RX Controls the FIFO writes.
@@ -46,8 +47,8 @@ module soup_top #(
 	assign fifo_wr_en_int   = (soup_loopback_en_i) ? fifo_wr_en_rcv   : fifo_wr_en_i;
 	assign fifo_wr_data_int = (soup_loopback_en_i) ? fifo_wr_data_rcv : fifo_wr_data_i;
 // Similarly, if SOUP is in loopback the TX is supposed to read from the FIFO, otherwise user can provide it
-	assign tx_start_loopback_int = (soup_loopback_en_i) ? (soup_response_done_int) : start_data_i
-	assign tx_data_int 			 = (soup_loopback_en_i) ? 8'h00 : data_i;
+	assign tx_start_loopback_int = (soup_loopback_en_i) ? (soup_response_done_int) : start_data_i;
+	assign tx_loopback_data_int  = (soup_loopback_en_i) ? 8'h00 : data_i;
 //////// [!] END TODO
 
 // SOUP Reciever FSM
@@ -75,7 +76,7 @@ module soup_top #(
 		.start_response_i    (cmd_done_int          ),
 		.soup_response_done_o(soup_response_done_int),
 		.start_data_i        (tx_start_loopback_int ),
-		.data_i              (tx_data_int           ),
+		.data_i              (tx_loopback_data_int  ),
 		.soup_data_done_o    (soup_data_done_int    ),
 		.fifo_rd_en_o        (fifo_rd_en_int        ),
 		.fifo_rd_data_i      (fifo_rd_data_int      ),
