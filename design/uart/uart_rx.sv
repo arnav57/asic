@@ -3,7 +3,7 @@
 
 module uart_rx #(
 	parameter LOGIC_FREQ  = 50_000_000,
-	parameter BAUD_RATE   = 115_200   ,
+	parameter BAUD_RATE   = 1_000_000 ,
 	parameter UART_LENGTH = 10
 ) (
 	input  wire         rx_clk_i       ,
@@ -74,7 +74,10 @@ module uart_rx #(
 // define logic to enable counter above
 	wire  rx_data_s2r;
 	logic rx_data_s3r;
-	std_data_sync I_data_sync_rx_data (
+	std_data_sync #(
+		.N(2),
+		.RESET_VAL(1'b1)
+	) I_data_sync_rx_data (
 		.clk (rx_clk_i     ),
 		.rstn(rstn_rx_clk_i),
 		.d   (rx_data_i    ),

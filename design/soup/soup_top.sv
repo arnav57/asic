@@ -61,8 +61,7 @@ module soup_top #(
 		.error_flag_o        (error_flag_int        ),
 		.soup_response_done_i(soup_response_done_int),
 		.fifo_wr_en_o        (fifo_wr_en_rcv        ),
-		.fifo_wr_data_o      (fifo_wr_data_rcv      ),
-		.soup_loopback_en_i  (soup_loopback_en_i    )
+		.fifo_wr_data_o      (fifo_wr_data_rcv      )
 	);
 
 // Soup Transmitter FSM

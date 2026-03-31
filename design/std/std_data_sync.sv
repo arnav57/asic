@@ -1,7 +1,8 @@
 //// Basic Data (single-bit) Synchronizer 
 
 module std_data_sync #(
-	parameter N = 2 // Number of sync flops
+	parameter N = 2, // Number of sync flops
+	parameter RESET_VAL = 1'b0
 ) (
 	input  wire clk, 
 	input  wire rstn,
@@ -14,7 +15,7 @@ logic [N-1:0] flop_r;
 // chain N flops together
 always_ff @(posedge clk) begin
 	if(~rstn) begin
-		flop_r <= {N{1'b0}};
+		flop_r <= {N{RESET_VAL}};
 	end else begin
 		flop_r[0] <= d;
 		for (int i = 1; i < N; i++) begin

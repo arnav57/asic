@@ -20,8 +20,8 @@ module soup_rcv (
 	// FIFO Control
 	output wire         fifo_wr_en_o        ,
 	output wire [8-1:0] fifo_wr_data_o      ,
-	// Behaviour Control
-	input  wire         soup_loopback_en_i
+	// To Command Decoder
+	output wire [8-1:0] soup_cmd_o
 );
 
 	typedef enum logic [2:0] {
@@ -40,6 +40,7 @@ module soup_rcv (
 	logic [8-1:0] payload_size_r;
 	logic         error_flag_r  ;
 	logic         cmd_done_r    ;
+	logic [8-1:0] cmd_r         ;
 
 // Payload Down Counter
 	logic [9-1:0] payload_remaining_r                                 ;
@@ -55,6 +56,7 @@ module soup_rcv (
 			payload_size_r <= 8'b0;
 			error_flag_r   <= 1'b0;
 			cmd_done_r     <= 1'b0;
+			cmd_r          <= 8'b0;
 		end else begin
 			case (soup_cmd_st_r)
 
@@ -70,6 +72,7 @@ module soup_rcv (
 				// in RCV_CMD state we decode the frame as a type of CMD_DATA (MSb 0) or CMD_RESP (MSb 1)
 				RCV_CMD : begin
 					if (data_rcv_valid_i) begin
+						cmd_r <= data_rcv_i; // latch in the command
 						if (~data_rcv_i[7]) begin
 							// This is a CMD_DATA type packet so we move to RCV_LEN
 							soup_cmd_st_r <= RCV_LEN;
@@ -190,6 +193,7 @@ module soup_rcv (
 	assign error_flag_o  	= error_flag_r;
 	assign fifo_wr_en_o  	= fifo_wr_en_d1r;
 	assign fifo_wr_data_o 	= fifo_wr_data_r;
+	assign soup_cmd_o       = cmd_r;
 
 
 endmodule : soup_rcv

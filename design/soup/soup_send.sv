@@ -69,6 +69,7 @@ module soup_send (
 			// loop counter for TX_PAYLOAD state
 			loop_cnt_r           <= 9'h0;
 			fifo_rd_en_r         <= 1'b0;
+			waiting_on_tx_r      <= 1'b0;
 		end else begin
 			case (soup_tx_st_r)
 
