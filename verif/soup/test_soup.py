@@ -39,6 +39,8 @@ async def reset_dut(dut):
     dut.fifo_wr_en_i.value = 0
     dut.fifo_wr_data_i.value = 0
     dut.soup_loopback_en_i.value = 0
+    dut.tx_start_i.value = 0
+    dut.fifo_rd_en_i.value = 0
     
     await Timer(100, units="ns")
     dut.soup_rstn_i.value = 1
